@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+
+        <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+        Remove this if you use the .htaccess -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <title>mandelbrot</title>
+        <meta name="description" content="" />
+        <meta name="author" content="Dave" />
+
+        <meta name="viewport" content="width=device-width; initial-scale=1.0" />
+
+        <!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script type="text/javascript" src="mandelbrot.js"></script>
+        <script type="text/javascript">
+            mandelbrotZoomFactor = 2;
+            
+            window.onload = function onload () {
+                var canvas = document.getElementById("output").appendChild(makeCanvasMandelbrot());
+                var w = canvas.width.valueOf();
+                var h = canvas.height.valueOf();
+                var zoomStack = [{x: 0, y: 0, z: 2}];
+                
+                redraw = function () {
+                    var current = zoomStack[zoomStack.length-1];
+                    var x = current.x, y = current.y, z = current.z;
+                    makeCanvasMandelbrot(canvas, x-z, y+z, x+z, y-z);
+                }
+                
+                function zoomIn (x, y, z) {
+                    var current = zoomStack[zoomStack.length-1];
+                    
+                    z = current.z/z;
+                    x = (x - w/2)*2*current.z/w + current.x;
+                    y = (h/2 - y)*2*current.z/h + current.y;
+                    zoomStack.push({x: x, y: y, z: z});
+                    makeCanvasMandelbrot(canvas, x-z, y+z, x+z, y-z);
+                }
+                
+                function zoomOut() {
+                    if (zoomStack.length === 1) return 0;
+                    zoomStack.pop();
+                    var current = zoomStack[zoomStack.length-1];
+                    var x = current.x, y = current.y, z = current.z;
+                    makeCanvasMandelbrot(canvas, x-z, y+z, x+z, y-z);
+                }
+                
+                function moveView(x, y) {
+                    var current = zoomStack[zoomStack.length-1];
+                    current.x += (x - w/2)*2*current.z/w;
+                    current.y += (h/2 - y)*2*current.z/h;
+                    makeCanvasMandelbrot(canvas, current.x-current.z, current.y+current.z, current.x+current.z, current.y-current.z);
+                }
+                
+                canvas.onclick = function (click) {
+                    var x = click.clientX - canvas.getBoundingClientRect().left - canvas.clientLeft + canvas.scrollLeft;
+                    var y = click.clientY - canvas.getBoundingClientRect().top - canvas.clientTop + canvas.scrollTop;
+                    if (click.shiftKey) {
+                        zoomIn(x, y, mandelbrotZoomFactor);
+                    } else if (click.ctrlKey) {
+                        zoomOut();
+                    } else {
+                        moveView(x, y);
+                    }
+                };
+                
+                window.onkeypress = function (keypress) {
+                    var current = zoomStack[zoomStack.length-1], x = current.x, y = current.y, z = current.z;
+                    if (keypress.char === "-" || keypress.char === "_") {
+                        decPrecision();                        
+                        makeCanvasMandelbrot(canvas, x-z, y+z, x+z, y-z);
+                    } else if (keypress.char === "=" || keypress.char === "+") {
+                        incPrecision();
+                        makeCanvasMandelbrot(canvas, x-z, y+z, x+z, y-z);
+                    }
+                }
+            }
+        </script>
+    </head>
+
+    <body>
+        <div>
+            <header>
+                <h1>mandelbrot</h1>
+            </header>
+            <nav>
+                <p>
+                    <a href="/">Home</a>
+                </p>
+                <p>
+                    <a href="/contact">Contact</a>
+                </p>
+            </nav>
+
+            <div id="output">
+            
+            </div>
+
+            <footer>
+                <p>
+                    &copy; Copyright  by Dave
+                </p>
+            </footer>
+        </div>
+    </body>
+</html>
